@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_expense_form.html" import expense_fields with context %}
+{% block title %}ویرایش مصرف · حساب و کتاب خانه{% endblock %}
+{% block content %}
+<div class="narrow">
+  <div class="card">
+    <h1>ویرایش مصرف</h1>
+    <p class="muted">ثبت شده توسط {{ expense.user.name }}</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {{ expense_fields(values, years) }}
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">ذخیره</button>
+        <a class="btn btn-ghost" href="{{ url_for('dashboard', y=values.year, m=values.month) }}">لغو</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

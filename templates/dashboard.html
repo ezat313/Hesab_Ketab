@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% from "_expense_form.html" import expense_fields with context %}
+{% block title %}{{ title }} · حساب و کتاب خانه{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-top">
+    <a class="month-arrow" href="{{ url_for('dashboard', y=prev.y, m=prev.m) }}" aria-label="ماه قبل">→</a>
+    <div class="hero-month">
+      <h1>{{ title }}</h1>
+      {% if is_current %}
+      <span>{{ household.name }}</span>
+      {% else %}
+      <a href="{{ url_for('dashboard') }}">برگشت به ماه جاری</a>
+      {% endif %}
+    </div>
+    <a class="month-arrow" href="{{ url_for('dashboard', y=next.y, m=next.m) }}" aria-label="ماه بعد">←</a>
+  </div>
+
+  <div class="hero-total">
+    <span class="hero-total-label">مصارف این ماه</span>
+    <strong>{{ total|fa_num }}</strong>
+    <span class="unit">افغانی</span>
+    <span class="count">در {{ expenses|length|fa_digits }} قلم</span>
+  </div>
+
+  {% if budget %}
+  {% set remaining = budget - total %}
+  <div class="hero-budget">
+    <div class="hero-budget-line {{ 'over' if remaining < 0 }}">
+      <span>بودجه: {{ budget|fa_num }} ؋</span>
+      {% if remaining >= 0 %}
+      <span><strong>{{ remaining|fa_num }} ؋</strong> باقی مانده</span>
+      {% else %}
+      <span><strong>{{ (-remaining)|fa_num }} ؋</strong> بیشتر از بودجه</span>
+      {% endif %}
+    </div>
+    <div class="progress {{ 'over' if remaining < 0 }}" role="img" aria-label="{{ budget_pct }}٪ بودجه مصرف شده"><span style="width: {{ budget_pct }}%"></span></div>
+  </div>
+  {% endif %}
+
+  <p class="hero-compare">
+    {% if prev_total %}
+      {% set diff = total - prev_total %}
+      {{ prev_title }}: {{ prev_total|fa_num }} ؋
+      {% if diff > 0 %}<span class="up">({{ diff|fa_num }} ؋ بیشتر)</span>{% elif diff < 0 %}<span class="down">({{ (-diff)|fa_num }} ؋ کمتر)</span>{% endif %}
+    {% elif not budget and current_user.is_admin %}
+      <a href="{{ url_for('family') }}">بودجهٔ ماهانه تعیین کنید</a> تا ببینید چقدر باقی مانده.
+    {% endif %}
+  </p>
+</section>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2>ثبت مصرف نو</h2>
+    <form method="post" action="{{ url_for('add_expense') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="view_y" value="{{ view.y }}">
+      <input type="hidden" name="view_m" value="{{ view.m }}">
+      {{ expense_fields(form_values, years) }}
+      <button type="submit" class="btn btn-primary btn-block">ثبت</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>مصارف به تفکیک کتگوری</h2>
+    {% if expenses %}
+    <div class="chart chart-pie"><canvas id="categoryChart"></canvas></div>
+    {% else %}
+    <p class="empty">در این ماه هنوز مصرفی ثبت نشده.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% if expenses %}
+<div class="card">
+  <h2>مصرف روزانه</h2>
+  <div class="chart chart-bar"><canvas id="dailyChart"></canvas></div>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>لیست مصارف</h2>
+  {% if expenses %}
+  <ul class="expense-list">
+    {% for e in expenses %}
+    {% set cat = e.category_info %}
+    <li class="expense">
+      <span class="dot" style="background: {{ cat.color }}"></span>
+      <div class="expense-main">
+        <div class="expense-title">{{ cat.label }}{% if e.note %} <span class="muted">· {{ e.note }}</span>{% endif %}</div>
+        <div class="expense-meta"><span>{{ e.spent_on|shamsi }}</span><span>{{ e.user.name }}</span></div>
+      </div>
+      <div class="expense-amount">{{ e.amount|fa_num }} ؋</div>
+      {% if current_user.can_edit(e) %}
+      <div class="expense-actions">
+        <a href="{{ url_for('edit_expense', expense_id=e.id) }}">ویرایش</a>
+        <form method="post" action="{{ url_for('delete_expense', expense_id=e.id) }}" data-confirm="این مصرف حذف شود؟">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link-danger">حذف</button>
+        </form>
+      </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">هیچ مصرفی برای {{ title }} ثبت نشده.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if expenses %}
+<script id="chart-data" type="application/json">{{ chart_data|tojson }}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+{% endif %}
+{% endblock %}

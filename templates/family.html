@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}خانواده · حساب و کتاب خانه{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ household.name }}</h1>
+  <p class="muted">{{ household.members|length|fa_digits }} عضو{% if current_user.is_admin %} · شما مدیر این خانواده هستید{% endif %}</p>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2>کد دعوت</h2>
+    <p class="muted">اعضای خانواده با ایمیل خود ثبت‌نام می‌کنند و بعد این کد را وارد می‌کنند.</p>
+    <div class="invite">
+      <code id="invite-code" dir="ltr">{{ household.invite_code_display }}</code>
+      <button type="button" class="btn btn-ghost" data-copy="#invite-code">کاپی</button>
+    </div>
+    {% if current_user.is_admin %}
+    <form method="post" action="{{ url_for('regenerate_invite_code') }}" data-confirm="کد قبلی دیگر کار نمی‌کند. کد جدید ساخته شود؟">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="link-muted">ساختن کد جدید</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>بودجهٔ ماهانه</h2>
+    {% if current_user.is_admin %}
+    <form method="post" action="{{ url_for('set_budget') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="budget">مبلغ (افغانی) <span class="muted">— برای برداشتن، خالی بگذارید</span></label>
+        <input id="budget" name="budget" inputmode="numeric" autocomplete="off" placeholder="مثلاً ۲۰۰۰۰" value="{{ household.monthly_budget or '' }}">
+      </div>
+      <button type="submit" class="btn btn-primary">ذخیره</button>
+    </form>
+    {% else %}
+    <p class="stat-value">{% if household.monthly_budget %}{{ household.monthly_budget|fa_num }} <small>؋</small>{% else %}<span class="muted">تعیین نشده</span>{% endif %}</p>
+    <p class="muted small">فقط مدیر خانواده می‌تواند بودجه را تغییر دهد.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>اعضا</h2>
+  <ul class="member-list">
+    {% for m in household.members %}
+    <li>
+      <div>
+        <strong>{{ m.name }}</strong>
+        {% if m.is_admin %}<span class="badge">مدیر</span>{% endif %}
+        {% if m.id == current_user.id %}<span class="badge badge-soft">شما</span>{% endif %}
+        <div class="muted small" dir="ltr">{{ m.email }}</div>
+      </div>
+      {% if current_user.is_admin and m.id != current_user.id %}
+      <form method="post" action="{{ url_for('remove_member', user_id=m.id) }}" data-confirm="«{{ m.name }}» از خانواده حذف شود؟ مصارفی که ثبت کرده باقی می‌ماند.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="link-danger">حذف از خانواده</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% if not current_user.is_admin %}
+  <form method="post" action="{{ url_for('leave_family') }}" data-confirm="از این خانواده خارج شوید؟">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="link-danger">خروج از خانواده</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

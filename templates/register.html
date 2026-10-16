@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}ثبت‌نام · حساب و کتاب خانه{% endblock %}
+{% block content %}
+<div class="auth">
+  <div class="card">
+    <h1>ثبت‌نام</h1>
+    <p class="muted">بعد از ثبت‌نام، یک خانوادهٔ نو می‌سازید یا با کد دعوت به خانوادهٔ خود می‌پیوندید.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="name">نام</label>
+        <input id="name" name="name" autocomplete="name" maxlength="80" required value="{{ form.get('name', '') }}">
+      </div>
+      <div class="field">
+        <label for="email">ایمیل</label>
+        <input id="email" name="email" type="email" dir="ltr" autocomplete="email" required value="{{ form.get('email', '') }}">
+      </div>
+      <div class="field">
+        <label for="password">رمز عبور <span class="muted">(حداقل ۸ حرف)</span></label>
+        <input id="password" name="password" type="password" dir="ltr" autocomplete="new-password" minlength="8" required>
+      </div>
+      <div class="field">
+        <label for="password2">تکرار رمز عبور</label>
+        <input id="password2" name="password2" type="password" dir="ltr" autocomplete="new-password" minlength="8" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">ساختن حساب</button>
+    </form>
+    <p class="auth-switch">قبلاً حساب ساخته‌اید؟ <a href="{{ url_for('login') }}">وارد شوید</a></p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}خانواده · حساب و کتاب خانه{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>سلام {{ current_user.name }}!</h1>
+  <p class="muted">برای شروع، یک خانوادهٔ نو بسازید یا به خانوادهٔ خود بپیوندید.</p>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2>پیوستن به خانواده</h2>
+    <p class="muted">کد دعوت را از مدیر خانواده بگیرید.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="join">
+      <div class="field">
+        <label for="code">کد دعوت</label>
+        <input id="code" name="code" dir="ltr" class="code-input" placeholder="XXXX-XXXX" autocomplete="off" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">پیوستن</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>ساختن خانوادهٔ نو</h2>
+    <p class="muted">شما مدیر این خانواده می‌شوید و می‌توانید اعضا را دعوت کنید.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="create">
+      <div class="field">
+        <label for="household_name">نام خانواده</label>
+        <input id="household_name" name="household_name" maxlength="100" placeholder="مثلاً خانوادهٔ احمدی" required>
+      </div>
+      <button type="submit" class="btn btn-secondary btn-block">ساختن خانواده</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
